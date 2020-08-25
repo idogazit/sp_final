@@ -26,6 +26,8 @@ typedef struct{
 	Group group1,group2;
 }Devision;
 
+double Epsilon = 0.00001;
+
 int compute_M(int* vec_K, int size_K);
 void compute_mat_Bg(double** mat_Bg, Graph_A* graph, Group* group);
 void compute_leading_eigenvec(double* eigenvec,double** mat, int dim );
@@ -49,6 +51,8 @@ void make_vec_of_1s(double* vec,int dim);
 void devide_according_to_s(Devision* devision, Group* group, double* vec_s);
 double** build_mat_double(int dim);
 Graph_A build_graph_A(FILE* file);
+void change_mat_to_mat_tag(double** mat, double mat_norm, int dim);
+void change_mat_tag_to_mat(double** mat, double mat_norm, int dim);
 
 
 void make_vec_of_1s(double* vec,int dim){
@@ -65,32 +69,50 @@ int compute_M(int* vec_K, int dim){
 	return m;
 }
 void compute_mat_Bg_hat(double** mat_Bg_hat,Graph_A* graph, Group* group){
-	int i,j,*pi,*pj,dim=group->size_g;
-	double *vec_f_g, **mat_Bg, **p;
+	int i,dim=group->size_g;
+	double *vec_f_g;
 	vec_f_g = (double*)calloc(dim,sizeof(double));
-
+	printf("before compute_mat_Bg\n");
 	compute_mat_Bg(mat_Bg_hat,graph, group);
-	compute_vec_f_g(vec_f_g,mat_Bg,dim);
+	printf("after compute_mat_Bg\n");
+	printf("before compute_vec_f_g\n");
+	compute_vec_f_g(vec_f_g,mat_Bg_hat,dim);
+	printf("after compute_vec_f_g\n");
 	for(i=0;i<dim;i++){
 		mat_Bg_hat[i][i] -= vec_f_g[i];
 	}
 	free(vec_f_g);
 }
 void compute_mat_Bg(double** mat_Bg, Graph_A* graph, Group* group){
-	int *pi_g, *pj_g ,m,dim=group->size_g;
-	double **pi_Bg, *pj_Bg;
-
+	int *pi_grp, *pj_grp ,m,dim=group->size_g;
+	double **pi_Bg, *pj_Bg, tmp;
+	int i,j;
 	m = graph->m;
+	printf("M = %d\n",m);
+	printf("before build_mat_g\n");
 	build_mat_g(mat_Bg,graph,group);
-	for(pi_g=group->arr_g, pi_Bg=mat_Bg; pi_g< group->arr_g + dim; pi_Bg++, pi_g++){
-		for(pj_g=group->arr_g, pj_Bg=*pi_Bg; pj_g< group->arr_g + dim; pj_Bg++, pj_g++){
-			*pj_Bg -=(graph->vec_k[*pi_g] * graph->vec_k[*pj_g])/m;
+	printf("after build_mat_g\n");
+	/*printf("vector k_g: (");*/
+	for(pi_grp=group->arr_g, pi_Bg=mat_Bg; pi_grp< group->arr_g + dim; pi_Bg++, pi_grp++){
+		/*printf("%d, ",graph->vec_k[*pi_grp]);*/
+		for(pj_grp=group->arr_g, pj_Bg=*pi_Bg; pj_grp< group->arr_g + dim; pj_Bg++, pj_grp++){
+			tmp =(double)((graph->vec_k[*pi_grp]) * (graph->vec_k[*pj_grp]))/m;
+			printf("tmp = %f/n",tmp);
+			*pj_Bg -= tmp;
+
 		}
 	}
+	printf("mat_Bg:\n");
+		for(i=0;i<group->size_g;i++){
+			for(j=0;j<group->size_g;j++){
+				printf("%f ",mat_Bg[i][j]);
+			}
+			printf("\n");
+		}
 }
 void build_mat_g(double** mat_g, Graph_A* graph, Group* group){
-	int i;
-	int *p_grp=group->arr_g, size_g=group->size_g;
+	int i,j;
+	int size_g=group->size_g;
 	for(i=0;i<size_g;i++){
 		int deg = graph->vec_k[group->arr_g[i]];
 		int j=0, d=0;
@@ -104,20 +126,28 @@ void build_mat_g(double** mat_g, Graph_A* graph, Group* group){
 				}
 		}
 	}
+	printf("mat_g:\n");
+		for(i=0;i<group->size_g;i++){
+			for(j=0;j<group->size_g;j++){
+				printf("%f ",mat_g[i][j]);
+			}
+			printf("\n");
+		}
 }
 Graph_A build_graph_A(FILE* file){
-	int *dim,f ,**pi, *deg, *pj;
+	int dim[1] ,**pi, *deg;
+/*	int f*/
 	Graph_A graph;
-	f = fread(dim,sizeof(int),1,file);
+	/*f =*/ fread(dim,sizeof(int),1,file);
 	/*check f==1 */
 	graph.num_nodes = *dim;
 	graph.mat_A = (int**)calloc(*dim,sizeof(int*));
 	graph.vec_k = (int*)calloc(*dim,sizeof(int));
 	for(pi=graph.mat_A, deg=graph.vec_k; pi<&graph.mat_A[*dim]; pi++, deg++){
-		f = fread(deg,sizeof(int),1,file);
+	/*	f =*/ fread(deg,sizeof(int),1,file);
 		/*check f==1 */
 		*pi = (int*)calloc(*deg,sizeof(int));
-		f = fread(*pi,sizeof(int),*deg,file);
+	/*	f =*/ fread(*pi,sizeof(int),*deg,file);
 		/*check f==*dim */
 	}
 	return graph;
@@ -188,13 +218,16 @@ void compute_vec_s(double* vec_s, double* eigenvec, int dim){
 	double *p;
 	double *q;
 	for(p=vec_s, q=eigenvec; p<&vec_s[dim];p++,q++){
-		if(*q>0){*p = 1.0;}
+		if(*q>Epsilon){*p = 1.0;}
 		else	{*p = 0.0;}
 	}
 }
 void devide_according_to_s(Devision *devision, Group* group, double* vec_s){
 	int *p_dev1,*p_dev2, *p_g, dim = group->size_g ;
 	double *p_s;
+	devision->group1.size_g=0;
+	devision->group2.size_g=0;
+
 
 	for(p_s=vec_s; p_s<&vec_s[dim]; p_s++){
 			if(*p_s>0){
@@ -204,12 +237,14 @@ void devide_according_to_s(Devision *devision, Group* group, double* vec_s){
 				devision->group2.size_g++;
 			}
 		}
+	printf("\n");
+
 	devision->group1.arr_g =(int*) calloc(devision->group1.size_g,sizeof(int));
 	devision->group2.arr_g =(int*) calloc(devision->group2.size_g,sizeof(int));
 	p_dev1=devision->group1.arr_g;
 	p_dev2=devision->group2.arr_g;
 	for(p_g=group->arr_g, p_s=vec_s; p_g<&group->arr_g[dim]; p_s++,p_g++){
-		if(*p_s>0){
+		if(*p_s>Epsilon){
 			*p_dev1 = *p_g;
 			p_dev1++;
 		}
@@ -219,32 +254,73 @@ void devide_according_to_s(Devision *devision, Group* group, double* vec_s){
 		}
 	}
 }
+void change_mat_to_mat_tag(double** mat, double mat_norm, int dim){
+	int i;
+	for(i=0;i<dim;i++){
+		mat[i][i]+=mat_norm;
+	}
+}
+void change_mat_tag_to_mat(double** mat, double mat_norm, int dim){
+	int i;
+		for(i=0;i<dim;i++){
+			mat[i][i]-=mat_norm;
+		}
+}
 Devision devide_group_into_two(Group* group, Graph_A* graph){
 	double  *vec_s;
-	double **mat_Bg_hat, *vec_eigen,val_eigen, **q, s_Bg_s;
+	double **mat_Bg_hat, *vec_eigen,val_eigen, s_Bg_s;
+	double mat_norm;
 	Devision devision;
 	Devision *p_devision=&devision;
+
+	int i,j;
 
 	mat_Bg_hat = build_mat_double(group->size_g);
 
 	vec_eigen = (double*)calloc(group->size_g,sizeof(double));
 
 	vec_s = (double*)calloc(group->size_g,sizeof(double));
-
+	printf("before compute_mat_Bg_hat\n");
 	compute_mat_Bg_hat(mat_Bg_hat,graph,group);
+	printf("after compute_mat_Bg_hat\n");
+	printf("mat_Bg_hat:\n");
+	for(i=0;i<group->size_g;i++){
+		for(j=0;j<group->size_g;j++){
+			printf("%f ",mat_Bg_hat[i][j]);
+		}
+		printf("\n");
+	}
+	mat_norm = compute_mat_norm(mat_Bg_hat,group->size_g);
+	change_mat_to_mat_tag(mat_Bg_hat,mat_norm,group->size_g);
+	printf("before compute_leading_eigenvec\n");
 	compute_leading_eigenvec(vec_eigen,mat_Bg_hat,group->size_g);
+	printf("after compute_leading_eigenvec\n");
+	printf("eigen vector =( ");
+	for(i=0;i<group->size_g;i++){
+		printf("%f, ",vec_eigen[i]);}
+	printf(")\n");
+	change_mat_tag_to_mat(mat_Bg_hat,mat_norm,group->size_g);
+	printf("before compute_leading_eigenvalue\n");
 	val_eigen = compute_leading_eigenvalue(vec_eigen,mat_Bg_hat,group->size_g);
+	printf("after compute_leading_eigenvalue\n");
+	printf("eigen value = %f\n",val_eigen);
 	if(val_eigen<=0){
+		printf("before make_vec_of_1\n");
 		make_vec_of_1s(vec_s, group->size_g);
+		printf("after make_vec_of_1s\n");
 	}
 	else{
+		printf("before compute_vec_s\n");
 		compute_vec_s(vec_s,vec_eigen,group->size_g);
+		printf("after compute_vec_s\n");
 		s_Bg_s = compute_vec1_mult_mat_mult_vec2(vec_s,mat_Bg_hat,vec_s,group->size_g);
 		if(s_Bg_s<=0){
 			make_vec_of_1s(vec_s,group->size_g);
 		}
 	}
+	printf("before devide_according_to_s\n");
 	devide_according_to_s(p_devision,group,vec_s);
+	printf("after devide_according_to_s\n");
 
 	free(vec_s);
 	free(vec_eigen);
@@ -252,7 +328,7 @@ Devision devide_group_into_two(Group* group, Graph_A* graph){
 	return devision;
 }
 double** build_mat_double(int dim){
-	double **p, *q, **mat;
+	double **p, **mat;
 	mat=(double**)calloc(dim,sizeof(double*));
 	for(p=mat; p<&mat[dim];p++){
 		*p=(double*)calloc(dim,sizeof(double));
@@ -261,7 +337,6 @@ double** build_mat_double(int dim){
 	return mat;
 }
 void compute_leading_eigenvec(double* eigenvec,double** mat, int dim ){
-	double norm;
 	double *vec0, *curr_vec;
 
 
@@ -271,8 +346,9 @@ void compute_leading_eigenvec(double* eigenvec,double** mat, int dim ){
 
 	generate_rand_vec0(vec0, dim);
 	copy_vector(vec0, curr_vec,dim);
-
+	printf("before generate_next_vec\n");
 	generate_next_vec(eigenvec,curr_vec,mat,dim);
+	printf("after generate_next_vec\n");
 	while(vectors_difference_is_small(curr_vec,eigenvec, dim)==0){
 		copy_vector(eigenvec,curr_vec,dim);
 		generate_next_vec(eigenvec,curr_vec,mat,dim);
@@ -328,28 +404,34 @@ void copy_vector(double* prev_bk, double* curr_vec,int dim){
 int vectors_difference_is_small(double* vector1, double* vector2, int dim){
 
 	double *p1, *p2;
-	double epsilon;
 	p2 = vector2;
-	epsilon = 0.00001;
 
 	for(p1=vector1; p1< &vector1[dim]; p1++){
-		if(fabs(*p1-*p2) >= epsilon) return 0;
+		if(fabs(*p1-*p2) >= Epsilon) return 0;
 		p2++;
 	}
 
 	return 1;
 }
+/*
 int main (int argc, char* argv[]){
-	int** mat_A = (int**)calloc(6,sizeof(int*));
+/*	int** mat_A = (int**)calloc(6,sizeof(int*));
 	int i;
 	Devision devision;
 	Group group, *p_group;
 	Graph_A graph, *p_graph;
+	int vec_k[]={3,3,3,1,3,3};
 	group.size_g = 6;
 	group.arr_g =(int*) calloc(6,sizeof(int));
-	for(i=0;i<6;i++){
-		group.arr_g[i]=i;
-	}
+	group.arr_g[0] = 0;
+	group.arr_g[1] = 1;
+	group.arr_g[2] = 2;
+	group.arr_g[3] = 3;
+	group.arr_g[4] = 4;
+	group.arr_g[5] = 5;
+
+
+
 	mat_A[0] = (int*)calloc(3,sizeof(int));
 	mat_A[1] = (int*)calloc(3,sizeof(int));
 	mat_A[2] = (int*)calloc(3,sizeof(int));
@@ -379,7 +461,7 @@ int main (int argc, char* argv[]){
 	mat_A[5][1]=3;
 	mat_A[5][2]=4;
 
-	int vec_k[]={3,3,3,1,3,3};
+
 
 
 	graph.mat_A = mat_A;
@@ -391,6 +473,17 @@ int main (int argc, char* argv[]){
 	p_group = &group;
 	devision = devide_group_into_two(p_group,p_graph);
 
+	int i;
+	FILE* input_file = fopen(argv[1], "r");
+	Devision devision;
+	Graph_A graph = build_graph_A(input_file);
+	Group group;
+	group.size_g = graph.num_nodes;
+	group.arr_g = (int*)calloc(graph.num_nodes,sizeof(int));
+	for(i=0;i<group.size_g;i++){
+		group.arr_g[i] = i;
+	}
+	devision = devide_group_into_two(&group,&graph);
 	printf("size of group 1: %d\n",devision.group1.size_g);
 	printf("group 1: ");
 	for(i=0;i<devision.group1.size_g;i++){
@@ -402,7 +495,26 @@ int main (int argc, char* argv[]){
 		for(i=0;i<devision.group2.size_g;i++){
 			printf("%d ",devision.group2.arr_g[i]);
 		}
-		printf("\n");
+
+/*	double** mat = (double**)calloc(6,sizeof(double*));
+	double eigen_vec[6];
+	int i;
+	for(i =0;i<6;i++){
+		mat[i]=(double*)calloc(6,sizeof(double));
+		mat[i][i]=i+0.1;
+
+	}
+	compute_leading_eigenvec(eigen_vec,mat,6);
+
+	for(i=0;i<6;i++){
+		printf("%f",eigen_vec[i]);
+	}
+
+	fclose(input_file);
+
+	printf("\n %d, %s\n",argc,argv[0]);
+
 
 	return 0;
 }
+*/
