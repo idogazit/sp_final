@@ -14,6 +14,7 @@ typedef struct {
 typedef struct {
 	int* arr_g;
 	int size_g;
+	int* tmp_vec;
 }Group;
 
 typedef struct {
@@ -33,44 +34,61 @@ Group* alg3(Graph_A* graph)
 	Group* O;
 	Group g;
 	Devision temp;
-	int size_P = 1, last_ind = 0;
+	int size_P = 1, last_ind_P = 1;
+	int size_O = 0, last_ind_O = 0;
 	P[0] = triv_g;
+	O = calloc(graph->num_nodes, sizeof(Group));
 	while (size_P > 0)
 	{
-		g = P[last_ind];
-		last_ind--;
-		size_P--;
-
-		temp = alg_2(g); /*here comes algorithm 2 into part*/
+		g = P[last_ind_P];
+		--last_ind_P;
+		--size_P;
+		
+		/*here comes algorithm 2 into part*/
+		//temp = alg_2(g);
 
 		if (temp.group1.size_g == 0)
 		{
 			/*add group2 into O*/
+			O[last_ind_O] = temp.group2;
+			last_ind_O++;
+			size_O++;
 		}
 		if (temp.group2.size_g == 0)
 		{
 			/* add group1 into O*/
+			O[last_ind_O] = temp.group1;
+			last_ind_O++;
+			size_O++;
 		}
 		else
 		{
 			if (temp.group1.size_g == 1)
 			{
 				/*add group 1 into O*/
+				O[last_ind_O] = temp.group1;
+				last_ind_O++;
+				size_O++;
 			}
 			else
 			{
-				P[last_ind + 1] = temp.group1;
-				last_ind++;
+				/*add group 1 into P*/
+				P[last_ind_P] = temp.group1;
+				last_ind_P++;
 				size_P++;
 			}
 			if (temp.group2.size_g == 1)
 			{
 				/*add group 2 into O*/
+				O[last_ind_O] = temp.group2;
+				last_ind_O++;
+				size_O++;
 			}
 			else
 			{
-				P[last_ind + 1] = temp.group2;
-				last_ind++;
+				/*add group 2 into P*/
+				P[last_ind_P] = temp.group2;
+				last_ind_P++;
 				size_P++;
 			}
 		}
@@ -84,6 +102,7 @@ Group trivial_group(Graph_A* graph)
 	int i;
 	full.size_g = graph->num_nodes;
 	arr = calloc(full.size_g, sizeof(int));
+	full.tmp_vec = calloc(full.size_g, sizeof(int));
 	for (i = 0; i < full.size_g; i++)
 		arr[i] = i;
 	full.arr_g = arr;
