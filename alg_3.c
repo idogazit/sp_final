@@ -23,15 +23,14 @@ typedef struct {
 
 double Epsilon = 0.00001;
 
-Group* alg3(Graph_A* graph);
+int alg3(Graph_A* graph, Group* O);
 Group trivial_group(Graph_A* graph);
 void output_groups(Group* O, int num_groups, char* out_file);
 
-Group* alg3(Graph_A* graph)
+int alg3(Graph_A* graph, Group* O)
 {
 	Group triv_g = trivial_group(graph);
 	Group* P = calloc(graph->num_nodes, sizeof(Group));
-	Group* O = calloc(graph->num_nodes, sizeof(Group));
 	Group g;
 	Devision temp;
 	int size_P = 1;
@@ -80,8 +79,14 @@ Group* alg3(Graph_A* graph)
 			}
 		}
 	}
-	output_groups(O, size_O, "filename");
-	return O;
+	
+	free(triv_g.arr_g);
+	free(triv_g.tmp_vec);
+	free(g.arr_g);
+	free(g.tmp_vec);
+	free(P);
+	
+	return size_O;
 }
 Group trivial_group(Graph_A* graph)
 {
@@ -94,7 +99,7 @@ Group trivial_group(Graph_A* graph)
 
 	for (i = 0; i < full.size_g; i++)
 	{
-		full.arr_g[i] = i + 1;
+		full.arr_g[i] = i;
 	}
 
 	return full;
@@ -131,19 +136,18 @@ void output_groups(Group* O, int num_groups, char* out_file)
 	fclose(out_div);
 }
 int main(int argc, char* argv[]) {
-	/*Graph_A graph;
-	int** P;
-	int* p[6];
-	graph.num_nodes = 6;
-	graph.vec_k = NULL;
-	graph.m = 0;
-	graph.mat_A = NULL;
-	for (int i = 0; i < graph.num_nodes; i++)
-	{
-		p[i] = i + 1;
-	}
-	for (int i = 0; i < graph.num_nodes; i++)
-	{
-		printf("%d",p[i]);
-	}*/
+	Graph_A* graph;
+	Group* final_div;
+	int num_groups;
+	FILE* input_file;
+
+	input_file = fopen(argv[1], "r"); /*opens input file and creates graph A*/
+	graph = build_graph_A(input_file);
+	fclose(input_file);
+
+	num_groups = alg3(graph, &final_div); /*calls for algorithm 3*/
+
+	output_groups(final_div, num_groups, argv[2]); /*writes final groups division into output file*/
+	
+	return 0;
 }
