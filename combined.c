@@ -58,6 +58,9 @@ void alg3(Graph_A* graph, Partition* O);
 void trivial_group(Group* triv_group,Graph_A* graph);
 void output_groups(Group* O, int num_groups, char* out_file);
 
+int* alg_4(int** vec_s, int len);
+int max_ind(double** arr, int len);
+
 /*debugging functions: */
 void print_graph(Graph_A* graph);
 void print_devision(Devision d);
@@ -704,3 +707,102 @@ int main(int argc, char* argv[]){
 		return 0;
 }
 */
+
+
+int max_ind(double** arr, int len)
+{
+	int max = 0, i = 0;
+	
+	for (i = 0; i < len; i++)
+	{
+		if (arr[i] > arr[max])
+		{
+			max = i;
+		}
+	}
+	return max;
+}
+
+int* alg_4(int** vec_s, int len)
+{
+	int k, i, j = 0;
+	int score_max_ind, improve_max_ind;
+	int* unmoved;
+	double* score;
+	double* improve;
+	int* indices;
+	double Q0, delta_Q = 0;
+
+	unmoved = (int*)calloc(len, sizeof(int));
+	indices = (int*)calloc(len, sizeof(int));
+	score = (double*)calloc(len, sizeof(double));
+	improve = (double*)calloc(len, sizeof(double));
+
+	while (delta_Q <= 0)
+	{
+		/*step 1*/
+		/* Unmoved is already assigned with zeros, and each unrelevant cell will be assigned -1 later*/
+
+		/*step 2*/
+		for (i = 0; i < len; i++)
+		{
+			/*a*/
+			Q0 = 888888; /*need to be replaced with s^tB[g]s*/
+
+			/*b*/
+			for (k = 0; k < len; k++)
+			{
+				if (unmoved[k] == 0)
+				{
+					*vec_s[k] = (-1) * (*vec_s[k]);
+					score[k] = 888888; /*need to be replaced with s^tB[g]s -Q0*/
+					*vec_s[k] = (-1) * (*vec_s[k]);
+				}
+			}
+
+			/*c*/
+			score_max_ind = max_ind(score, len);
+
+			/*d*/
+			*vec_s[score_max_ind] = (-1) * (*vec_s[score_max_ind]);
+
+			/*e*/
+			indices[i] = score_max_ind;
+			
+			/*f*/
+			if (i == 0)
+			{
+				improve[i] = score[score_max_ind];
+			}
+			else
+			{
+				improve[i] = improve[i - 1] + score[score_max_ind];
+			}
+
+			/*g*/
+			unmoved[score_max_ind] = -1;
+		}
+
+		/*step 3*/
+		improve_max_ind = max_ind(&improve, len);
+
+		/*step 4*/
+		for (i = len - 1; i >= improve_max_ind + 1; i--)
+		{
+			j = indices[i];
+			*vec_s[j] = (-1) * (*vec_s[j]);
+		}
+
+		/*step 5*/
+		if (improve_max_ind == len - 1)
+		{
+			delta_Q = 0;
+		}
+		else
+		{
+			delta_Q = improve[improve_max_ind];
+		}
+	}
+
+	return vec_s;
+}
