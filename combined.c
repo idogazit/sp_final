@@ -803,6 +803,9 @@ int* alg_4(int** vec_s, int len)
 			delta_Q = improve[improve_max_ind];
 		}
 	}
-
+	free(unmoved);
+	free(indices);
+	free(score);
+	free(improve);
 	return vec_s;
 }
