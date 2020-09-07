@@ -237,55 +237,28 @@ void devide_according_to_s(Devision* devision, Group* group, double* vec_s) {
 }
 void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 	double* vector, val_eigen, s_Bg_s;
-	int i;
 	vector = (double*)calloc(group->size_g, sizeof(double));
 
-		printf("before compute_leading_eigenvec\n");
 	compute_leading_eigenvec(vector, graph, group);
-		printf("after compute_leading_eigenvec\n");
-		printf("eigen vector =( ");
-		for(i=0;i<group->size_g;i++){
-			printf("%f, ",vector[i]);}
-		printf(")\n");
-		printf("before compute_leading_eigenvalue\n");
+
+		
 	val_eigen = compute_leading_eigenvalue(vector, graph, group);
-		printf("after compute_leading_eigenvalue\n");
-		printf("eigen value = %f\n",val_eigen);
-		if (val_eigen <= 0.0) {
-	/*		printf("val_eigen<=0.0");
-			printf("before make_vec_of_1\n");
-	*/		make_vec_of_1s(vector, group->size_g);
-			devide_according_to_s(devision, group, vector);
-	/*		printf("after make_vec_of_1s\n");*/
+		
+	if (val_eigen <= 0.0) {
+		make_vec_of_1s(vector, group->size_g);
+		devide_according_to_s(devision, group, vector);
+
 	}
 	else {
-		/*		printf("before compute_vec_s\n");
-		*/		compute_vec_s_on_eigen_vec(vector, group->size_g);
-		/*		printf("after compute_vec_s\n");
-				printf("vec_s:\n(");
-				for(i=0;i<group->size_g;i++){
-					printf("%f, ",vector[i]);
-				}
-				printf("\n");
-				printf("before compute_vec_BgH_vec\n");
-		*/		s_Bg_s = compute_vec_BgH_vec(vector, graph, group);
-		/*		printf("after compute_vec_BgH_vec\n");
-				printf("s_Bg_s = %f\n",s_Bg_s);
-
-
-		*/		if (s_Bg_s <= 0.0) {
-		/*			printf("s_Bg_s<=0.0");
-		*/			make_vec_of_1s(vector, group->size_g);
-				}
-				alg_4(vector,graph,group);
-				devide_according_to_s(devision, group, vector);
+		compute_vec_s_on_eigen_vec(vector, group->size_g);
+		s_Bg_s = compute_vec_BgH_vec(vector, graph, group);
+		if (s_Bg_s <= 0.0) {
+			make_vec_of_1s(vector, group->size_g);
+		}
+		alg_4(vector, graph, group);
+		devide_according_to_s(devision, group, vector);
 	}
-	/*	printf("before devide_according_to_s\n");
-
-	*/
-
-	/*	printf("after devide_according_to_s\n");
-	*/
+	
 	free(vector);
 }
 
@@ -299,16 +272,14 @@ void compute_leading_eigenvec(double* eigenvec, Graph_A* graph, Group* group) {
 
 	generate_rand_vec0(vec0, size);
 	copy_vector(vec0, curr_vec, size);
-	/*	printf("before generate_next_vec\n");
-	*/	generate_next_vec(eigenvec, curr_vec, graph, group);
-	/*	printf("after generate_next_vec\n");
-	*/	while ((vectors_difference_is_small(curr_vec, eigenvec, size) == 0)) {
+	generate_next_vec(eigenvec, curr_vec, graph, group);
+	while ((vectors_difference_is_small(curr_vec, eigenvec, size) == 0)) {
 		++i;
 		copy_vector(eigenvec, curr_vec, size);
 		generate_next_vec(eigenvec, curr_vec, graph, group);
 	}
-	printf("\n\n number of power iterations: %d\n",i);
-	printf("group size: %d\n\n",group->size_g);
+	/*printf("\n\n number of power iterations: %d\n",i);
+	printf("group size: %d\n\n",group->size_g);*/
 	free(vec0);
 	free(curr_vec);
 }
@@ -325,25 +296,14 @@ void generate_next_vec(double* next_vec, double* curr_vec, Graph_A* graph, Group
 	int i;
 	double* p_next_vec;
 	double norm = 0.0;
-/*	if(size==8){printf("\nmat Bgh tag:\n");}
-*/	for (i = 0; i < size; i++) {
+	for (i = 0; i < size; i++) {
 		compute_row_Bg_hat(graph->tmp_vec, graph, group, group->arr_g[i],i);
 
 		graph->tmp_vec[i] += graph->norm;
-/*		if(size==8){
-			for(j=0;j<size;j++){
-				printf("%.3f,	",graph->tmp_vec[j]);
-			}
-			printf("\n");
-		}
-
-*/		next_vec[i] = row_multiply_col(graph->tmp_vec, curr_vec, size);
+		next_vec[i] = row_multiply_col(graph->tmp_vec, curr_vec, size);
 		norm += next_vec[i] * next_vec[i];
 	}
-/*	if(size==8){
-		printf("\n\n\n\n");
-	}
-*/	norm = sqrt(norm);
+	norm = sqrt(norm);
 	assert(norm != 0);
 	for (p_next_vec = next_vec; p_next_vec < &next_vec[size]; p_next_vec++) {
 		*p_next_vec /= norm;
@@ -403,24 +363,15 @@ void alg3(Graph_A* graph, Partition* O)
 
 	trivial_group(&triv_g, graph);
 	graph->norm = compute_graph_norm(graph,&triv_g);
-	print_graph(graph);
 	push_partition(&P,&triv_g);
 	while (P.num_of_groups > 0)
 	{
-		printf("\n\nP:\n\n");/*debugging prints*/
-		print_groups(P.groups, P.num_of_groups);
-		printf("\n\nO:\n\n");
-		print_groups(O->groups, O->num_of_groups);
 
 		pop_partition(&grp, &P);
-		printf("\n\nCurrent g:\n\n");/*debugging print*/
-		print_group(grp);
-		print_mat_g(graph,&grp);
-		print_mat_Bgh(graph,&grp);
+		
 		/*here comes algorithm 2 into part*/
 		devide_group_into_two(&temp_dev, &grp, graph);/*********/
 		
-		print_devision(temp_dev); /*debugging print*/
 		
 		if (temp_dev.group1.size_g == 0 || temp_dev.group2.size_g == 0)
 		{
@@ -456,11 +407,7 @@ void alg3(Graph_A* graph, Partition* O)
 			}
 		}
 	}
-	printf("\n\nP:\n\n");/*debugging prints*/
-			print_groups(P.groups, P.num_of_groups);
-			printf("\n\nO:\n\n");
-			print_groups(O->groups, O->num_of_groups);
-
+	
 	free(grp.arr_g);
 	kill_partition(&P);
 }
@@ -636,13 +583,10 @@ int main(int argc, char* argv[]) {
 	final_partition.num_of_groups = 0;
 	
 	alg3(&graph, &final_partition);
-	printf("\n\n");
-	print_groups(final_partition.groups,final_partition.num_of_groups);
-	printf("\n\n");
+	
 	output_groups(final_partition.groups, final_partition.num_of_groups, argv[2]);
 
 	kill_partition(&final_partition);
-	print_output(argv[2]);
 	return 0;
 }
 
