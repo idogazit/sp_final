@@ -53,6 +53,7 @@ void compute_vec_s_on_eigen_vec(double* eigenvec, int dim);
 void compute_leading_eigenvec(double* eigenvec, Graph_A* graph, Group* group);
 void generate_next_vec(double* next_vec, double* curr_vec, Graph_A* graph, Group* group);
 double compute_graph_norm(Graph_A* graph, Group* trivial_group);
+void kill_graph(Graph_A* graph);
 
 void alg3(Graph_A* graph, Partition* O);
 void trivial_group(Group* triv_group,Graph_A* graph);
@@ -534,6 +535,16 @@ void kill_partition(Partition* partition){
 	}
 	free(partition->groups);
 }
+void kill_graph(Graph_A* graph){
+	int *p_node;
+	free(graph->tmp_vec);
+	for(p_node=graph->mat_A;p_node < graph->mat_A + graph->num_nodes; p_node++){
+		free(*p_node);
+	}
+	free(graph->mat_A);
+
+	free(graph->vec_k);
+}
 void copy_group(Group* org_group, Group* new_group){
 		new_group->size_g = org_group->size_g;
 		new_group->arr_g = (int*)calloc(new_group->size_g,sizeof(int));
@@ -587,84 +598,9 @@ int main(int argc, char* argv[]) {
 	output_groups(final_partition.groups, final_partition.num_of_groups, argv[2]);
 
 	kill_partition(&final_partition);
+	kill_graph(&graph);
 	return 0;
 }
-
-
-/*
-int main(int argc, char* argv[]){
-	int** mat_A = (int**)calloc(6,sizeof(int*));
-	int i,j;
-		Devision devision;
-		Group group;
-		Graph_A graph;
-		int vec_k[]={2,2,2,2,3,3};
-		group.size_g = 6;
-		group.arr_g =(int*) calloc(6,sizeof(int));
-		group.arr_g[0] = 0;
-		group.arr_g[1] = 1;
-		group.arr_g[2] = 2;
-		group.arr_g[3] = 3;
-		group.arr_g[4] = 4;
-		group.arr_g[5] = 5;
-
-
-		mat_A[0] = (int*)calloc(2,sizeof(int));
-		mat_A[1] = (int*)calloc(2,sizeof(int));
-		mat_A[2] = (int*)calloc(2,sizeof(int));
-		mat_A[3] = (int*)calloc(2,sizeof(int));
-		mat_A[4] = (int*)calloc(3,sizeof(int));
-		mat_A[5] = (int*)calloc(3,sizeof(int));
-
-		mat_A[0][0]=3;
-		mat_A[0][1]=5;
-
-		mat_A[1][0]=2;
-		mat_A[1][1]=4;
-
-		mat_A[2][0]=1;
-		mat_A[2][1]=4;
-
-		mat_A[3][0]=0;
-		mat_A[3][1]=5;
-
-		mat_A[4][0]=1;
-		mat_A[4][1]=2;
-		mat_A[4][2]=5;
-
-		mat_A[5][0]=0;
-		mat_A[5][1]=3;
-		mat_A[5][2]=4;
-
-
-
-
-		graph.mat_A = mat_A;
-		graph.vec_k=vec_k;
-		graph.num_nodes=6;
-		graph.m=compute_M(vec_k,6);
-
-		printf("before compute_graph_norm\n");
-		graph.norm = compute_graph_norm(&graph,&group);
-		printf("after compute_graph_norm\n");
-		printf("graph norm = %f\n",graph.norm);
-		for(i=0;i<6;i++){
-			compute_row_Bg_hat(graph.tmp_vec,&graph,&group,i);
-			for(j=0;j<6;j++){
-				printf("%f, ",graph.tmp_vec[j]);
-			}
-			printf("\n");
-		}
-		devide_group_into_two(&devision,&group,&graph);
-		print_devision(devision);
-
-		printf("\n %d, %s\n",argc,argv[0]);
-
-		return 0;
-}
-*/
-
-
 int max_ind(double* arr, int len)
 {
 	int max = 0, i = 0;
