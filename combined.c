@@ -58,7 +58,7 @@ void alg3(Graph_A* graph, Partition* O);
 void trivial_group(Group* triv_group,Graph_A* graph);
 void output_groups(Group* O, int num_groups, char* out_file);
 
-int* alg_4(int** vec_s, int len);
+void alg_4(int** vec_s, int len, Graph_A* graph, Group* group);
 int max_ind(double** arr, int len);
 
 /*debugging functions: */
@@ -723,7 +723,7 @@ int max_ind(double** arr, int len)
 	return max;
 }
 
-int* alg_4(int** vec_s, int len)
+void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
 {
 	int k, i, j = 0;
 	int score_max_ind, improve_max_ind;
@@ -747,7 +747,7 @@ int* alg_4(int** vec_s, int len)
 		for (i = 0; i < len; i++)
 		{
 			/*a*/
-			Q0 = 888888; /*need to be replaced with s^tB[g]s*/
+			Q0 = compute_vec_BgH_vec(vec_s, graph, group);
 
 			/*b*/
 			for (k = 0; k < len; k++)
@@ -755,7 +755,7 @@ int* alg_4(int** vec_s, int len)
 				if (unmoved[k] == 0)
 				{
 					*vec_s[k] = (-1) * (*vec_s[k]);
-					score[k] = 888888; /*need to be replaced with s^tB[g]s -Q0*/
+					score[k] = compute_vec_BgH_vec(vec_s, graph, group) - Q0;
 					*vec_s[k] = (-1) * (*vec_s[k]);
 				}
 			}
@@ -807,5 +807,4 @@ int* alg_4(int** vec_s, int len)
 	free(indices);
 	free(score);
 	free(improve);
-	return vec_s;
 }
