@@ -359,7 +359,7 @@ void alg3(Graph_A* graph, Partition* O)
 	Partition P;
 	Group grp;
 	Devision temp_dev;
-	P.groups = calloc(graph->num_nodes, sizeof(Group));
+	P.groups = (Group*)calloc(graph->num_nodes, sizeof(Group));
 	P.num_of_groups = 0;
 
 	trivial_group(&triv_g, graph);
@@ -385,7 +385,8 @@ void alg3(Graph_A* graph, Partition* O)
 			if (temp_dev.group1.size_g == 1)
 			{
 				/*add group 1 into O*/
-				
+				printf("\n\nIn if for group 1\n\n");
+
 				push_partition(O,&(temp_dev.group1));
 			}
 			else
@@ -397,7 +398,7 @@ void alg3(Graph_A* graph, Partition* O)
 			if (temp_dev.group2.size_g == 1)
 			{
 				/*add group 2 into O*/
-				
+				printf("\n\nIn if for group 2\n\n");
 				push_partition(O,&(temp_dev.group2));
 			}
 			else
@@ -407,9 +408,13 @@ void alg3(Graph_A* graph, Partition* O)
 				push_partition(&P,&(temp_dev.group2));
 			}
 		}
+		free(temp_dev.group1.arr_g);
+		free(temp_dev.group2.arr_g);
+		free(grp.arr_g);
+
 	}
 	
-	free(grp.arr_g);
+	free(triv_g.arr_g);
 	kill_partition(&P);
 }
 void trivial_group(Group* triv_group,Graph_A* graph)
@@ -536,7 +541,7 @@ void kill_partition(Partition* partition){
 	free(partition->groups);
 }
 void kill_graph(Graph_A* graph){
-	int *p_node;
+	int **p_node;
 	free(graph->tmp_vec);
 	for(p_node=graph->mat_A;p_node < graph->mat_A + graph->num_nodes; p_node++){
 		free(*p_node);
@@ -631,7 +636,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	score = (double*)calloc(len, sizeof(double));
 	improve = (double*)calloc(len, sizeof(double));
 
-	while (delta_Q > 0)
+	do 
 	{
 		/*step 1*/
 		/* Unmoved is already assigned with zeros, and each unrelevant cell will be assigned -1 later*/
@@ -695,7 +700,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 		{
 			delta_Q = improve[improve_max_ind];
 		}
-	}
+	} while (delta_Q > 0);
 	free(unmoved);
 	free(indices);
 	free(score);
