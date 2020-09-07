@@ -738,7 +738,7 @@ void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
 	score = (double*)calloc(len, sizeof(double));
 	improve = (double*)calloc(len, sizeof(double));
 
-	while (delta_Q <= 0)
+	while (delta_Q > 0)
 	{
 		/*step 1*/
 		/* Unmoved is already assigned with zeros, and each unrelevant cell will be assigned -1 later*/
