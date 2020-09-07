@@ -58,8 +58,8 @@ void alg3(Graph_A* graph, Partition* O);
 void trivial_group(Group* triv_group,Graph_A* graph);
 void output_groups(Group* O, int num_groups, char* out_file);
 
-void alg_4(int** vec_s, int len, Graph_A* graph, Group* group);
-int max_ind(double** arr, int len);
+void alg_4(double* vec_s, Graph_A* graph, Group* group);
+int max_ind(double* arr, int len);
 
 /*debugging functions: */
 void print_graph(Graph_A* graph);
@@ -68,6 +68,7 @@ void print_group(Group g);
 void print_groups(Group* gs, int num_gs);
 void print_mat_g(Graph_A* graph,Group* group);
 void print_mat_Bgh(Graph_A* graph,Group* group);
+void print_output(char* out_file);
 
 
 void push_partition(Partition* partition, Group* group);
@@ -254,6 +255,7 @@ void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 	/*		printf("val_eigen<=0.0");
 			printf("before make_vec_of_1\n");
 	*/		make_vec_of_1s(vector, group->size_g);
+			devide_according_to_s(devision, group, vector);
 	/*		printf("after make_vec_of_1s\n");*/
 	}
 	else {
@@ -274,10 +276,14 @@ void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 		*/		if (s_Bg_s <= 0.0) {
 		/*			printf("s_Bg_s<=0.0");
 		*/			make_vec_of_1s(vector, group->size_g);
-		}
+				}
+				alg_4(vector,graph,group);
+				devide_according_to_s(devision, group, vector);
 	}
 	/*	printf("before devide_according_to_s\n");
-	*/	devide_according_to_s(devision, group, vector);
+
+	*/
+
 	/*	printf("after devide_according_to_s\n");
 	*/
 	free(vector);
@@ -286,7 +292,7 @@ void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 void compute_leading_eigenvec(double* eigenvec, Graph_A* graph, Group* group) {
 	double* vec0, * curr_vec;
 	int size = group->size_g;
-
+	int i;
 	vec0 = (double*)calloc(size, sizeof(double));
 	curr_vec = (double*)calloc(size, sizeof(double));
 
@@ -296,10 +302,13 @@ void compute_leading_eigenvec(double* eigenvec, Graph_A* graph, Group* group) {
 	/*	printf("before generate_next_vec\n");
 	*/	generate_next_vec(eigenvec, curr_vec, graph, group);
 	/*	printf("after generate_next_vec\n");
-	*/	while (vectors_difference_is_small(curr_vec, eigenvec, size) == 0) {
+	*/	while ((vectors_difference_is_small(curr_vec, eigenvec, size) == 0)) {
+		++i;
 		copy_vector(eigenvec, curr_vec, size);
 		generate_next_vec(eigenvec, curr_vec, graph, group);
 	}
+	printf("\n\n number of power iterations: %d\n",i);
+	printf("group size: %d\n\n",group->size_g);
 	free(vec0);
 	free(curr_vec);
 }
@@ -489,7 +498,7 @@ void output_groups(Group* O, int num_groups, char* out_file)
 		{
 			printf("Error writing to output file\n");
 		}
-		n = fwrite(&(g.arr_g), sizeof(int), g.size_g, out_div);
+		n = fwrite(g.arr_g, sizeof(int), g.size_g, out_div);
 		if (n != g.size_g)
 		{
 			printf("Error writing to output file\n");
@@ -627,10 +636,13 @@ int main(int argc, char* argv[]) {
 	final_partition.num_of_groups = 0;
 	
 	alg3(&graph, &final_partition);
-
+	printf("\n\n");
+	print_groups(final_partition.groups,final_partition.num_of_groups);
+	printf("\n\n");
 	output_groups(final_partition.groups, final_partition.num_of_groups, argv[2]);
+
 	kill_partition(&final_partition);
-	
+	print_output(argv[2]);
 	return 0;
 }
 
@@ -709,7 +721,7 @@ int main(int argc, char* argv[]){
 */
 
 
-int max_ind(double** arr, int len)
+int max_ind(double* arr, int len)
 {
 	int max = 0, i = 0;
 	
@@ -723,7 +735,7 @@ int max_ind(double** arr, int len)
 	return max;
 }
 
-void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
+void alg_4(double* vec_s, Graph_A* graph, Group* group)
 {
 	int k, i, j = 0;
 	int score_max_ind, improve_max_ind;
@@ -732,6 +744,7 @@ void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
 	double* improve;
 	int* indices;
 	double Q0, delta_Q = 0;
+	int len = group->size_g;
 
 	unmoved = (int*)calloc(len, sizeof(int));
 	indices = (int*)calloc(len, sizeof(int));
@@ -754,9 +767,9 @@ void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
 			{
 				if (unmoved[k] == 0)
 				{
-					*vec_s[k] = (-1) * (*vec_s[k]);
+					vec_s[k] = (-1) * (vec_s[k]);
 					score[k] = compute_vec_BgH_vec(vec_s, graph, group) - Q0;
-					*vec_s[k] = (-1) * (*vec_s[k]);
+					vec_s[k] = (-1) * (vec_s[k]);
 				}
 			}
 
@@ -764,7 +777,7 @@ void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
 			score_max_ind = max_ind(score, len);
 
 			/*d*/
-			*vec_s[score_max_ind] = (-1) * (*vec_s[score_max_ind]);
+			vec_s[score_max_ind] = (-1) * (vec_s[score_max_ind]);
 
 			/*e*/
 			indices[i] = score_max_ind;
@@ -784,13 +797,13 @@ void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
 		}
 
 		/*step 3*/
-		improve_max_ind = max_ind(&improve, len);
+		improve_max_ind = max_ind(improve, len);
 
 		/*step 4*/
 		for (i = len - 1; i >= improve_max_ind + 1; i--)
 		{
 			j = indices[i];
-			*vec_s[j] = (-1) * (*vec_s[j]);
+			vec_s[j] = (-1) * (vec_s[j]);
 		}
 
 		/*step 5*/
@@ -807,4 +820,40 @@ void alg_4(int** vec_s, int len, Graph_A* graph, Group* group)
 	free(indices);
 	free(score);
 	free(improve);
+}
+void print_output(char* out_file)
+{
+    FILE* output;
+	int n;
+	int num_groups, i, j;
+	int num_nodes;
+	int* nodes;
+
+	output = fopen(out_file, "r");
+
+	n = fread(&num_groups, sizeof(int), 1, output);
+	assert(n == 1);
+	printf("Number of groups in division: %d\n", num_groups);
+
+	for (i = 0; i < num_groups; i++)
+	{
+		n = fread(&num_nodes, sizeof(int), 1, output);
+		printf("Number of nodes in Group: %d\n", num_nodes);
+		assert(n == 1);
+
+		nodes = (int*)calloc(num_nodes, sizeof(int));
+		n = fread(nodes, sizeof(int), num_nodes, output);
+		assert(n == num_nodes);
+
+		printf("Group nodes: ");
+		for (j = 0; j < num_nodes; j++)
+		{
+			printf("%d, ", nodes[j]);
+		}
+		printf("\n");
+
+		free(nodes);
+	}
+
+	fclose(output);
 }
