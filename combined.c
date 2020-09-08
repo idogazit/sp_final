@@ -61,6 +61,7 @@ void output_groups(Group* O, int num_groups, char* out_file);
 
 void alg_4(double* vec_s, Graph_A* graph, Group* group);
 int max_ind(double* arr, int len);
+void reset_unmoved(int* unmoved, int len);
 
 /*debugging functions: */
 void print_graph(Graph_A* graph);
@@ -247,8 +248,6 @@ void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 		
 	if (val_eigen <= 0.0) {
 		make_vec_of_1s(vector, group->size_g);
-		devide_according_to_s(devision, group, vector);
-
 	}
 	else {
 		compute_vec_s_on_eigen_vec(vector, group->size_g);
@@ -256,10 +255,13 @@ void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 		if (s_Bg_s <= 0.0) {
 			make_vec_of_1s(vector, group->size_g);
 		}
-		alg_4(vector, graph, group);
-		devide_according_to_s(devision, group, vector);
+		else
+		{
+			alg_4(vector, graph, group);
+		}
 	}
-	
+	devide_according_to_s(devision, group, vector);
+
 	free(vector);
 }
 
@@ -604,6 +606,8 @@ int main(int argc, char* argv[]) {
 
 	kill_partition(&final_partition);
 	kill_graph(&graph);
+
+	/*print_output(argv[2]);*/
 	return 0;
 }
 int max_ind(double* arr, int len)
@@ -619,6 +623,14 @@ int max_ind(double* arr, int len)
 	}
 	return max;
 }
+void reset_unmoved(int* unmoved, int len)
+{
+	int i;
+	for (i = 0; i < len; i++)
+	{
+		unmoved[i] = 0;
+	}
+}
 
 void alg_4(double* vec_s, Graph_A* graph, Group* group)
 {
@@ -628,7 +640,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	double* score;
 	double* improve;
 	int* indices;
-	double Q0, delta_Q = 0;
+	double /*Q0, */delta_Q = 0;
 	int len = group->size_g;
 
 	unmoved = (int*)calloc(len, sizeof(int));
@@ -639,13 +651,13 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	do 
 	{
 		/*step 1*/
-		/* Unmoved is already assigned with zeros, and each unrelevant cell will be assigned -1 later*/
+		reset_unmoved(unmoved, len);
 
 		/*step 2*/
 		for (i = 0; i < len; i++)
 		{
 			/*a*/
-			Q0 = compute_vec_BgH_vec(vec_s, graph, group);
+			/*Q0 = compute_vec_BgH_vec(vec_s, graph, group);*/
 
 			/*b*/
 			for (k = 0; k < len; k++)
@@ -653,7 +665,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 				if (unmoved[k] == 0)
 				{
 					vec_s[k] = (-1) * (vec_s[k]);
-					score[k] = compute_vec_BgH_vec(vec_s, graph, group) - Q0;
+					score[k] = compute_vec_BgH_vec(vec_s, graph, group);/* -Q0;*/
 					vec_s[k] = (-1) * (vec_s[k]);
 				}
 			}
@@ -684,6 +696,11 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 		/*step 3*/
 		improve_max_ind = max_ind(improve, len);
 
+		if (improve[len - 1] == 0 && improve[improve_max_ind] == 0)
+		{
+			improve_max_ind = len - 1;
+		}
+
 		/*step 4*/
 		for (i = len - 1; i >= improve_max_ind + 1; i--)
 		{
@@ -694,13 +711,14 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 		/*step 5*/
 		if (improve_max_ind == len - 1)
 		{
-			delta_Q = 0;
+			delta_Q = Epsilon;
 		}
 		else
 		{
 			delta_Q = improve[improve_max_ind];
 		}
-	} while (delta_Q > 0);
+	} while (delta_Q > Epsilon);
+	
 	free(unmoved);
 	free(indices);
 	free(score);
