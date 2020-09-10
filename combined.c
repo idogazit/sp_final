@@ -45,9 +45,11 @@ int vectors_difference_is_small(double* vector1, double* vector2, int dim);
 void make_vec_of_1s(double* vec, int dim);
 void devide_according_to_s(Devision* devision, Group* group, double* vec_s);
 void build_graph_A(Graph_A* graph, FILE* file);
+double compute_vec_BgH_vec(double* vec, Graph_A* graph, Group* group);
 
 void build_row_g(double* row_g, Graph_A* graph, Group* group, int node);
 void compute_row_Bg_hat(double* row_Bg_hat, Graph_A* graph, Group* group, int node,int i);
+void compute_row_Bg(double* row_Bg, Graph_A* graph, Group* group, int node);
 double compute_leading_eigenvalue(double* leading_eigenvec, Graph_A*, Group* group);
 void compute_vec_s_on_eigen_vec(double* eigenvec, int dim);
 void compute_leading_eigenvec(double* eigenvec, Graph_A* graph, Group* group);
@@ -63,7 +65,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group);
 int max_ind(double* arr, int len);
 void reset_unmoved(int* unmoved, int len);
 void compute_vec_rowBgH_s(double* vec_rowBgH_s, Graph_A* graph, Group* group, double* vec_s);
-void compute_vec_BgH_ii(double* vec_BgH_ii, Graph_A* graph, Group* group);
+void compute_vec_Bg_ii(double* vec_Bg_ii, Graph_A* graph, Group* group);
 /*debugging functions: */
 void print_graph(Graph_A* graph);
 void print_devision(Devision d);
@@ -135,6 +137,7 @@ void build_row_g(double* row_g, Graph_A* graph, Group* group, int node) {
 		}
 	}
 }
+
  void build_graph_A(Graph_A* graph,FILE* file) {
 	int dim[1], ** pi, * deg;
 	/*	int f*/
@@ -644,12 +647,22 @@ void compute_vec_rowBgH_s(double* vec_rowBgH_s, Graph_A* graph, Group* group, do
 		vec_rowBgH_s[i] = row_multiply_col(graph->tmp_vec, vec_s,group->size_g);
 	}
 }
-void compute_vec_BgH_ii(double* vec_BgH_ii, Graph_A* graph, Group* group){
-	int i;
+void compute_vec_Bg_ii(double* vec_Bg_ii, Graph_A* graph, Group* group){
+	double *p_vec;
+	int *p_grp;
 
-	for(i=0;i<group->size_g;i++){
-		compute_row_Bg_hat(graph->tmp_vec, graph, group,group->arr_g[i],i);
-		vec_BgH_ii[i] = graph->tmp_vec[i];
+	for(p_vec=vec_Bg_ii,p_grp=group->arr_g;p_vec<vec_Bg_ii + group->size_g;p_vec++,p_grp++){
+		*p_vec = (double)(graph->vec_k[*p_grp] * graph->vec_k[*p_grp]) / (double)graph->m;
+	}
+}
+void compute_row_Bg(double* row_Bg, Graph_A* graph, Group* group, int node) {
+	int* p_grp, m = graph->m, dim = group->size_g;
+	double* p_Bg, tmp =(double)graph->vec_k[node] / (double)m;
+
+	build_row_g(row_Bg, graph, group, node);
+
+	for (p_grp = group->arr_g, p_Bg = row_Bg; p_grp < group->arr_g + dim; p_Bg++, p_grp++) {
+		*p_Bg -= tmp *(double)graph->vec_k[*p_grp];
 	}
 }
 void alg_4(double* vec_s, Graph_A* graph, Group* group)
@@ -663,16 +676,16 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	double /*Q0,*/ delta_Q = 0;
 	int len = group->size_g;
 
-	double rowBgH_s, *vec_BgH_ii ;
+	double rowBg_s, *vec_Bg_ii ;
 
 	unmoved = (int*)calloc(len, sizeof(int));
 	indices = (int*)calloc(len, sizeof(int));
 	score = (double*)calloc(len, sizeof(double));
 	improve = (double*)calloc(len, sizeof(double));
 
-	vec_BgH_ii = (double*)calloc(len, sizeof(double));
+	vec_Bg_ii = (double*)calloc(len, sizeof(double));
 
-	compute_vec_BgH_ii(vec_BgH_ii,graph,group);
+	compute_vec_Bg_ii(vec_Bg_ii,graph,group);
 
 
 	do 
@@ -691,9 +704,9 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 			{
 				if (unmoved[k] == 0)
 				{
-					compute_row_Bg_hat(graph->tmp_vec,graph,group,group->arr_g[k],k);
-					rowBgH_s = row_multiply_col(graph->tmp_vec,vec_s,len);
-					score[k] = 4 * (vec_BgH_ii[k] - (vec_s[k] * rowBgH_s));
+					compute_row_Bg(graph->tmp_vec,graph,group,group->arr_g[k]);
+					rowBg_s = row_multiply_col(graph->tmp_vec,vec_s,len);
+					score[k] = 4 * (vec_Bg_ii[k] - (vec_s[k] * rowBg_s));
 
 					/*vec_s[k] *= -1;
 					score[k] = compute_vec_BgH_vec(vec_s,graph,group) - Q0;
@@ -763,7 +776,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	free(score);
 	free(improve);
 
-	free(vec_BgH_ii);
+	free(vec_Bg_ii);
 }
 void print_output(char* out_file)
 {
