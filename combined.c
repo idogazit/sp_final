@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <math.h>
 #include <time.h>
+#include <prints.h>
 
 typedef struct {
 	int** mat_A;
@@ -46,7 +47,7 @@ void make_vec_of_1s(double* vec, int dim);
 void devide_according_to_s(Devision* devision, Group* group, double* vec_s);
 void build_graph_A(Graph_A* graph, FILE* file);
 double compute_vec_BgH_vec(double* vec, Graph_A* graph, Group* group);
-
+void trivial_partition(Partition* partition,int num_of_nodes);
 void build_row_g(double* row_g, Graph_A* graph, Group* group, int node);
 void compute_row_Bg_hat(double* row_Bg_hat, Graph_A* graph, Group* group, int node,int i);
 void compute_row_Bg(double* row_Bg, Graph_A* graph, Group* group, int node);
@@ -94,6 +95,16 @@ int compute_M(int* vec_K, int dim) {
 	}
 	return m;
 }
+void trivial_partition(Partition* partition,int num_of_nodes){
+	int *i;
+	for(i=0;i<num_of_nodes;i++){
+		partition->groups[i].arr_g =(int*)malloc(sizeof(int));
+		partition->groups[i].arr_g[0] = i;
+		partition->groups[i].size_g = 1;
+	}
+	partition->num_of_groups = num_of_nodes;
+}
+
 
 void compute_row_Bg_hat(double* row_Bg_hat, Graph_A* graph, Group* group, int node,int i) {
 	int* p_grp, m = graph->m, dim = group->size_g;
@@ -605,9 +616,12 @@ int main(int argc, char* argv[]) {
 	fclose(input_file);
 	final_partition.groups =(Group*)calloc(graph.num_nodes, sizeof(Group));
 	final_partition.num_of_groups = 0;
-	
-	alg3(&graph, &final_partition);
-	
+	if(graph.m == 0){
+		trivial_partition(&final_partition,graph.num_nodes);
+	}
+	else{
+		alg3(&graph, &final_partition);
+	}
 	output_groups(final_partition.groups, final_partition.num_of_groups, argv[2]);
 
 	kill_partition(&final_partition);
