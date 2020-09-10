@@ -62,7 +62,8 @@ void output_groups(Group* O, int num_groups, char* out_file);
 void alg_4(double* vec_s, Graph_A* graph, Group* group);
 int max_ind(double* arr, int len);
 void reset_unmoved(int* unmoved, int len);
-
+void compute_vec_rowBgH_s(double* vec_rowBgH_s, Graph_A* graph, Group* group, double* vec_s);
+void compute_vec_BgH_ii(double* vec_BgH_ii, Graph_A* graph, Group* group);
 /*debugging functions: */
 void print_graph(Graph_A* graph);
 void print_devision(Devision d);
@@ -238,7 +239,7 @@ void devide_according_to_s(Devision* devision, Group* group, double* vec_s) {
 	}
 }
 void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
-	double* vector, val_eigen, s_Bg_s;
+	double* vector, val_eigen, s_BgH_s;
 	vector = (double*)calloc(group->size_g, sizeof(double));
 
 	compute_leading_eigenvec(vector, graph, group);
@@ -251,8 +252,8 @@ void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 	}
 	else {
 		compute_vec_s_on_eigen_vec(vector, group->size_g);
-		s_Bg_s = compute_vec_BgH_vec(vector, graph, group);
-		if (s_Bg_s <= 0.0) {
+		s_BgH_s = compute_vec_BgH_vec(vector, graph, group);
+		if (s_BgH_s <= 0.0) {
 			make_vec_of_1s(vector, group->size_g);
 		}
 		else
@@ -588,6 +589,8 @@ int main(int argc, char* argv[]) {
 	Graph_A graph;
 	Partition final_partition;
 	FILE* input_file;
+	clock_t start, end;
+	start = clock();
 	if (argc != 3)
 	{
 		printf("Error in inputs\n");
@@ -606,7 +609,9 @@ int main(int argc, char* argv[]) {
 
 	kill_partition(&final_partition);
 	kill_graph(&graph);
-
+	end = clock();
+	printf("Execution time is %f seconds\n",
+				((double)(end-start) / CLOCKS_PER_SEC));
 	/*print_output(argv[2]);*/
 	return 0;
 }
@@ -631,7 +636,22 @@ void reset_unmoved(int* unmoved, int len)
 		unmoved[i] = 0;
 	}
 }
+void compute_vec_rowBgH_s(double* vec_rowBgH_s, Graph_A* graph, Group* group, double* vec_s){
+	int i;
 
+	for(i=0;i<group->size_g;i++){
+		compute_row_Bg_hat(graph->tmp_vec, graph, group,group->arr_g[i],i);
+		vec_rowBgH_s[i] = row_multiply_col(graph->tmp_vec, vec_s,group->size_g);
+	}
+}
+void compute_vec_BgH_ii(double* vec_BgH_ii, Graph_A* graph, Group* group){
+	int i;
+
+	for(i=0;i<group->size_g;i++){
+		compute_row_Bg_hat(graph->tmp_vec, graph, group,group->arr_g[i],i);
+		vec_BgH_ii[i] = graph->tmp_vec[i];
+	}
+}
 void alg_4(double* vec_s, Graph_A* graph, Group* group)
 {
 	int k, i, j = 0;
@@ -640,41 +660,58 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	double* score;
 	double* improve;
 	int* indices;
-	double /*Q0, */delta_Q = 0;
+	double /*Q0,*/ delta_Q = 0;
 	int len = group->size_g;
+
+	double rowBgH_s, *vec_BgH_ii ;
 
 	unmoved = (int*)calloc(len, sizeof(int));
 	indices = (int*)calloc(len, sizeof(int));
 	score = (double*)calloc(len, sizeof(double));
 	improve = (double*)calloc(len, sizeof(double));
 
+	vec_BgH_ii = (double*)calloc(len, sizeof(double));
+
+	compute_vec_BgH_ii(vec_BgH_ii,graph,group);
+
+
 	do 
 	{
 		/*step 1*/
 		reset_unmoved(unmoved, len);
-
+		improve_max_ind = 0;
 		/*step 2*/
 		for (i = 0; i < len; i++)
 		{
 			/*a*/
-			/*Q0 = compute_vec_BgH_vec(vec_s, graph, group);*/
-
+			/*Q0 = compute_vec_BgH_vec(vec_s, graph, group);
+			*/score_max_ind = -1;
 			/*b*/
 			for (k = 0; k < len; k++)
 			{
 				if (unmoved[k] == 0)
 				{
-					vec_s[k] = (-1) * (vec_s[k]);
-					score[k] = compute_vec_BgH_vec(vec_s, graph, group);/* -Q0;*/
-					vec_s[k] = (-1) * (vec_s[k]);
+					compute_row_Bg_hat(graph->tmp_vec,graph,group,group->arr_g[k],k);
+					rowBgH_s = row_multiply_col(graph->tmp_vec,vec_s,len);
+					score[k] = 4 * (vec_BgH_ii[k] - (vec_s[k] * rowBgH_s));
+
+					/*vec_s[k] *= -1;
+					score[k] = compute_vec_BgH_vec(vec_s,graph,group) - Q0;
+					vec_s[k] *= -1;
+					*/if(score_max_ind == -1){
+						score_max_ind = k;
+					}
+					if(score[score_max_ind] < score[k]){
+						score_max_ind = k;
+					}
 				}
 			}
 
 			/*c*/
-			score_max_ind = max_ind(score, len);
-
+			/*score_max_ind = max_ind(score, len);
+			*/
 			/*d*/
-			vec_s[score_max_ind] = (-1) * (vec_s[score_max_ind]);
+			vec_s[score_max_ind] *= -1;
 
 			/*e*/
 			indices[i] = score_max_ind;
@@ -688,14 +725,16 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 			{
 				improve[i] = improve[i - 1] + score[score_max_ind];
 			}
-
+			if(improve[improve_max_ind] < improve[i]){
+				improve_max_ind = i;
+			}
 			/*g*/
 			unmoved[score_max_ind] = -1;
 		}
 
 		/*step 3*/
-		improve_max_ind = max_ind(improve, len);
-
+	/*	improve_max_ind = max_ind(improve, len);
+	*/
 		if (improve[len - 1] == 0 && improve[improve_max_ind] == 0)
 		{
 			improve_max_ind = len - 1;
@@ -705,24 +744,26 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 		for (i = len - 1; i >= improve_max_ind + 1; i--)
 		{
 			j = indices[i];
-			vec_s[j] = (-1) * (vec_s[j]);
+			vec_s[j] *= -1;
 		}
 
 		/*step 5*/
 		if (improve_max_ind == len - 1)
 		{
-			delta_Q = Epsilon;
+			delta_Q = 0;
 		}
 		else
 		{
 			delta_Q = improve[improve_max_ind];
 		}
-	} while (delta_Q > Epsilon);
+	} while (delta_Q > 0);
 	
 	free(unmoved);
 	free(indices);
 	free(score);
 	free(improve);
+
+	free(vec_BgH_ii);
 }
 void print_output(char* out_file)
 {
