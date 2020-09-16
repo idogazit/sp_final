@@ -1,10 +1,6 @@
 #include "computations.h"
+#include "algorithms.h"
 #define Epsilon 0.00001
-
-void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph);
-void alg3(Graph_A* graph, Partition* O);
-void alg_4(double* vec_s, Graph_A* graph, Group* group);
-
 
 void alg3(Graph_A* graph, Partition* O)
 {
@@ -79,17 +75,17 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	double* score;
 	double* improve;
 	int* indices;
-	double /*Q0,*/ delta_Q = 0;
+	double delta_Q = 0;
 	int len = group->size_g;
 
 	double rowBg_s, * vec_Bg_ii;
 
-	unmoved = (int*)calloc(len, sizeof(int));
-	indices = (int*)calloc(len, sizeof(int));
-	score = (double*)calloc(len, sizeof(double));
-	improve = (double*)calloc(len, sizeof(double));
+	unmoved = (int*)malloc(len * sizeof(int));
+	indices = (int*)malloc(len * sizeof(int));
+	score = (double*)malloc(len * sizeof(double));
+	improve = (double*)malloc(len * sizeof(double));
 
-	vec_Bg_ii = (double*)calloc(len, sizeof(double));
+	vec_Bg_ii = (double*)malloc(len * sizeof(double));
 
 	compute_vec_Bg_ii(vec_Bg_ii, graph, group);
 
@@ -103,8 +99,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 		for (i = 0; i < len; i++)
 		{
 			/*a*/
-			/*Q0 = compute_vec_BgH_vec(vec_s, graph, group);
-			*/score_max_ind = -1;
+			score_max_ind = -1;
 			/*b*/
 			for (k = 0; k < len; k++)
 			{
@@ -114,10 +109,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 					rowBg_s = row_multiply_col(graph->tmp_vec, vec_s, len);
 					score[k] = 4 * (vec_Bg_ii[k] - (vec_s[k] * rowBg_s));
 
-					/*vec_s[k] *= -1;
-					score[k] = compute_vec_BgH_vec(vec_s,graph,group) - Q0;
-					vec_s[k] *= -1;
-					*/if (score_max_ind == -1) {
+					if (score_max_ind == -1) {
 						score_max_ind = k;
 					}
 					if (score[score_max_ind] < score[k]) {

@@ -1,15 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "graph.h"
 
-typedef struct {
-	int** mat_A;
-	int* vec_k;
-	int m;
-	int num_nodes;
-	double norm;
-	double* tmp_vec;
-
-}Graph_A;
 
 void kill_graph(Graph_A* graph) {
 	int** p_node;

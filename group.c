@@ -1,9 +1,5 @@
 #include "graph.h"
-
-typedef struct {
-	int* arr_g;
-	int size_g;
-}Group;
+#include "group.h"
 
 
 void copy_vector_int(int* org_vec, int* new_vec, int dim) {
@@ -26,7 +22,7 @@ void trivial_group(Group* triv_group, Graph_A* graph)
 	int i;
 
 	triv_group->size_g = graph->num_nodes;
-	triv_group->arr_g = calloc(graph->num_nodes, sizeof(int));
+	triv_group->arr_g = (int*)malloc(graph->num_nodes * sizeof(int));
 
 	for (i = 0; i < triv_group->size_g; i++)
 	{
@@ -34,7 +30,7 @@ void trivial_group(Group* triv_group, Graph_A* graph)
 	}
 }
 
-void output_groups(Group* O, int num_groups, char* out_file)
+int output_groups(Group* O, int num_groups, char* out_file)
 {
 	FILE* out_div;
 	int n;
@@ -46,6 +42,7 @@ void output_groups(Group* O, int num_groups, char* out_file)
 	if (n != 1)
 	{
 		printf("Error writing to output file\n");
+		return -1;
 	}
 
 	for (pointer = &O[0]; pointer < &O[num_groups]; pointer++)
@@ -55,14 +52,18 @@ void output_groups(Group* O, int num_groups, char* out_file)
 		if (n != 1)
 		{
 			printf("Error writing to output file\n");
+			return -1;
 		}
 		n = fwrite(g.arr_g, sizeof(int), g.size_g, out_div);
 		if (n != g.size_g)
 		{
 			printf("Error writing to output file\n");
+			return -1;
 		}
 	}
 
 	fclose(out_div);
+
+	return 0;
 }
 

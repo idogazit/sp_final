@@ -1,3 +1,15 @@
+/*
+* GRAPH Summary:
+*
+* A module that implements a graph class
+*
+*
+* build_graph_A			- Creates a new graph matrix A
+* kill_graph			- Terminates all memory allocations related to the graph
+* compute_M				- Computes the sum of the degrees of nodes in the graph
+*
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -6,7 +18,9 @@
 #ifndef _GRAPH_H
 #define _GRAPH_H
 
-
+/*
+* Type used for containing all relevant information regarding to a graph
+*/
 typedef struct {
 	int** mat_A;
 	int* vec_k;

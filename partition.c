@@ -1,14 +1,5 @@
 #include "group.h"
-
-typedef struct {
-	Group group1, group2;
-}Devision;
-
-typedef struct {
-	Group* groups;
-	int num_of_groups;
-}Partition;
-
+#include "partition.h"
 
 void trivial_partition(Partition* partition, int num_of_nodes) {
 	int i;
