@@ -1,9 +1,4 @@
-/*
- * alg_2.c
- *
- *  Created on: 24 баев 2020
- *      Author: USER
- */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>

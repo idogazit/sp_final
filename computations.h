@@ -1,3 +1,29 @@
+/*
+* COMPUTATIONS Summary:
+*
+* A module that holds all the low-level and simple computations needed in the main algorithms
+*
+*
+* vectors_difference_is_small		-
+* devide_according_to_s				-
+* compute_vec_BgH_vec				-
+* build_row_g						-
+* compute_row_Bg_hat				-
+* compute_row_Bg					-
+* compute_leading_eigenvalue		-
+* compute_leading_eigenvec			-
+* generate_next_vec					-
+* compute_graph_norm				-
+* compute_vec_rowBgH_s				-
+* compute_vec_Bg_ii					-
+* compute_vec_s_on_eigen_vec		-
+* make_vec_of_1s					-
+* generate_rand_vec0				-
+* row_multiply_col					-
+* copy_vector						-
+* reset_unmoved						- Resets the set of unmoved nodes to be zeros
+*/
+
 #include "partition.h"
 
 #ifndef _COMPUTATIONS_H

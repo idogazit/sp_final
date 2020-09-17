@@ -32,8 +32,30 @@ typedef struct {
 }Graph_A;
 
 
+/*
+* This function gets an address for a graph, reads the relevant info from the file
+* and keeps it in the struct vars
+*
+* @param: graph - the target graph, file - the input file
+*/
 void build_graph_A(Graph_A* graph, FILE* file);
+
+
+/*
+* This function gets an address for a graph and frees all allocated memory of it
+*
+* @param : graph - the target graph
+*/
 void kill_graph(Graph_A* graph);
-int compute_M(int* vec_K, int size_K);
+
+
+/*
+* This function gets a vector of nodes degrees and it's dimension
+* and it returns the sum of the vector (value M)
+*
+* @param : vec_K - the target vector, dim - the vector's size
+* @return: sum of vec_K
+*/
+int compute_M(int* vec_K, int dim);
 
 #endif
