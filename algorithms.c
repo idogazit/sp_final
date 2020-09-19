@@ -8,7 +8,7 @@ void alg3(Graph_A* graph, Partition* O)
 	Partition P;
 	Group grp;
 	Devision temp_dev;
-	P.groups = (Group*)calloc(graph->num_nodes, sizeof(Group));
+	P.groups = (Group*)malloc(graph->num_nodes * sizeof(Group));
 	P.num_of_groups = 0;
 
 	trivial_group(&triv_g, graph);
@@ -20,7 +20,7 @@ void alg3(Graph_A* graph, Partition* O)
 		pop_partition(&grp, &P);
 
 		/*here comes algorithm 2 into part*/
-		devide_group_into_two(&temp_dev, &grp, graph);/*********/
+		devide_group_into_two(&temp_dev, &grp, graph);
 
 
 		if (temp_dev.group1.size_g == 0 || temp_dev.group2.size_g == 0)
@@ -98,9 +98,7 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 		/*step 2*/
 		for (i = 0; i < len; i++)
 		{
-			/*a*/
 			score_max_ind = -1;
-			/*b*/
 			for (k = 0; k < len; k++)
 			{
 				if (unmoved[k] == 0)
@@ -118,16 +116,10 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 				}
 			}
 
-			/*c*/
-			/*score_max_ind = max_ind(score, len);
-			*/
-			/*d*/
 			vec_s[score_max_ind] *= -1;
 
-			/*e*/
 			indices[i] = score_max_ind;
 
-			/*f*/
 			if (i == 0)
 			{
 				improve[i] = score[score_max_ind];
@@ -139,13 +131,12 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 			if (improve[improve_max_ind] < improve[i]) {
 				improve_max_ind = i;
 			}
-			/*g*/
+
 			unmoved[score_max_ind] = -1;
 		}
 
 		/*step 3*/
-	/*	improve_max_ind = max_ind(improve, len);
-	*/
+
 		if (improve[len - 1] == 0 && improve[improve_max_ind] == 0)
 		{
 			improve_max_ind = len - 1;
@@ -173,13 +164,12 @@ void alg_4(double* vec_s, Graph_A* graph, Group* group)
 	free(indices);
 	free(score);
 	free(improve);
-
 	free(vec_Bg_ii);
 }
 
 void devide_group_into_two(Devision* devision, Group* group, Graph_A* graph) {
 	double* vector, val_eigen, s_BgH_s;
-	vector = (double*)calloc(group->size_g, sizeof(double));
+	vector = (double*)malloc(group->size_g * sizeof(double));
 
 	compute_leading_eigenvec(vector, graph, group);
 

@@ -37,7 +37,7 @@ typedef struct {
 * This function gets an address for a partition and inserts to it the trivial partition
 * where each nodes is a group of his own
 *
-* @param : partition - the target partition, num_of_nodes - the amount of nodes
+* @param : partition - the target partition address, num_of_nodes - the amount of nodes
 */
 void trivial_partition(Partition* partition, int num_of_nodes);
 
@@ -46,7 +46,7 @@ void trivial_partition(Partition* partition, int num_of_nodes);
 * This function gets a partition and a group and inserts the group to the partition
 * Insertion is done at the end of the array
 *
-* @param : partition - the destination partition, group - the target group
+* @param : partition - the destination partition address, group - the target group address
 */
 void push_partition(Partition* partition, Group* group);
 
@@ -56,7 +56,7 @@ void push_partition(Partition* partition, Group* group);
 * removes the group from the end of the partition and copies it to the input group addres
 * Deletion is done at the end of the array
 *
-* @param : pop_group - the destination group, partition - the target partition
+* @param : pop_group - the destination group address, partition - the target partition address
 */
 void pop_partition(Group* pop_group, Partition* partition);
 
@@ -64,7 +64,7 @@ void pop_partition(Group* pop_group, Partition* partition);
 /*
 * This function gets an address for a partition and frees all allocated memory of it
 *
-* @param : partition - the target partition
+* @param : partition - the target partition address
 */
 void kill_partition(Partition* partition);
 

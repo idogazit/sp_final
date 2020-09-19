@@ -13,7 +13,7 @@ void copy_vector_int(int* org_vec, int* new_vec, int dim) {
 
 void copy_group(Group* org_group, Group* new_group) {
 	new_group->size_g = org_group->size_g;
-	new_group->arr_g = (int*)calloc(new_group->size_g, sizeof(int));
+	new_group->arr_g = (int*)malloc(new_group->size_g * sizeof(int));
 	copy_vector_int(org_group->arr_g, new_group->arr_g, new_group->size_g);
 }
 

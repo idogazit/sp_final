@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <assert.h>
 
 #ifndef _GRAPH_H
 #define _GRAPH_H
@@ -28,6 +27,7 @@ typedef struct {
 	int num_nodes;
 	double norm;
 	double* tmp_vec;
+	int max_num_iters;
 
 }Graph_A;
 
@@ -36,7 +36,7 @@ typedef struct {
 * This function gets an address for a graph, reads the relevant info from the file
 * and keeps it in the struct vars
 *
-* @param: graph - the target graph, file - the input file
+* @param: graph - the target graph address, file - the input file address
 */
 void build_graph_A(Graph_A* graph, FILE* file);
 
@@ -44,7 +44,7 @@ void build_graph_A(Graph_A* graph, FILE* file);
 /*
 * This function gets an address for a graph and frees all allocated memory of it
 *
-* @param : graph - the target graph
+* @param : graph - the target graph address
 */
 void kill_graph(Graph_A* graph);
 
@@ -53,7 +53,7 @@ void kill_graph(Graph_A* graph);
 * This function gets a vector of nodes degrees and it's dimension
 * and it returns the sum of the vector (value M)
 *
-* @param : vec_K - the target vector, dim - the vector's size
+* @param : vec_K - the target vector address, dim - the vector's size
 * @return: sum of vec_K
 */
 int compute_M(int* vec_K, int dim);

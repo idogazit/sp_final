@@ -88,9 +88,15 @@ double compute_vec_BgH_vec(double* vec, Graph_A* graph, Group* group) {
 }
 
 double compute_leading_eigenvalue(double* leading_eigenvec, Graph_A* graph, Group* group) {
-	double val;
+	double val, col_m_row;
+	col_m_row = row_multiply_col(leading_eigenvec, leading_eigenvec, group->size_g);
+	if (col_m_row == 0)
+	{
+		printf("Error in computing leading eigen value\n");
+		exit(-1);
+	}
 	val = compute_vec_BgH_vec(leading_eigenvec, graph, group);
-	val /= row_multiply_col(leading_eigenvec, leading_eigenvec, group->size_g);
+	val /= col_m_row;
 
 	return val;
 }
@@ -119,8 +125,8 @@ void devide_according_to_s(Devision* devision, Group* group, double* vec_s) {
 		}
 	}
 
-	devision->group1.arr_g = (int*)calloc(devision->group1.size_g, sizeof(int));
-	devision->group2.arr_g = (int*)calloc(devision->group2.size_g, sizeof(int));
+	devision->group1.arr_g = (int*)malloc(devision->group1.size_g * sizeof(int));
+	devision->group2.arr_g = (int*)malloc(devision->group2.size_g * sizeof(int));
 
 	p_dev1 = devision->group1.arr_g;
 	p_dev2 = devision->group2.arr_g;
@@ -141,21 +147,23 @@ void devide_according_to_s(Devision* devision, Group* group, double* vec_s) {
 void compute_leading_eigenvec(double* eigenvec, Graph_A* graph, Group* group) {
 	double* vec0, * curr_vec;
 	int size = group->size_g;
-	int i;
-	vec0 = (double*)calloc(size, sizeof(double));
-	curr_vec = (double*)calloc(size, sizeof(double));
+	int i = 0;
+	vec0 = (double*)malloc(size * sizeof(double));
+	curr_vec = (double*)malloc(size * sizeof(double));
 
 
 	generate_rand_vec0(vec0, size);
 	copy_vector(vec0, curr_vec, size);
 	generate_next_vec(eigenvec, curr_vec, graph, group);
 	while ((vectors_difference_is_small(curr_vec, eigenvec, size) == 0)) {
-		++i;
+		if (i++ == graph->max_num_iters)
+		{
+			printf("Infinite loop accured\n");
+			exit(-1);
+		}
 		copy_vector(eigenvec, curr_vec, size);
 		generate_next_vec(eigenvec, curr_vec, graph, group);
 	}
-	/*printf("\n\n number of power iterations: %d\n",i);
-	printf("group size: %d\n\n",group->size_g);*/
 	free(vec0);
 	free(curr_vec);
 }
@@ -180,7 +188,11 @@ void generate_next_vec(double* next_vec, double* curr_vec, Graph_A* graph, Group
 		norm += next_vec[i] * next_vec[i];
 	}
 	norm = sqrt(norm);
-	assert(norm != 0);
+	if (norm == 0)
+	{
+		printf("Error in generating next vector\n");
+		exit(-1);
+	}
 	for (p_next_vec = next_vec; p_next_vec < &next_vec[size]; p_next_vec++) {
 		*p_next_vec /= norm;
 	}
@@ -228,14 +240,7 @@ void reset_unmoved(int* unmoved, int len)
 		*p = 0;
 	}
 }
-void compute_vec_rowBgH_s(double* vec_rowBgH_s, Graph_A* graph, Group* group, double* vec_s) {
-	int i;
 
-	for (i = 0; i < group->size_g; i++) {
-		compute_row_Bg_hat(graph->tmp_vec, graph, group, group->arr_g[i], i);
-		vec_rowBgH_s[i] = row_multiply_col(graph->tmp_vec, vec_s, group->size_g);
-	}
-}
 void compute_vec_Bg_ii(double* vec_Bg_ii, Graph_A* graph, Group* group) {
 	double* p_vec;
 	int* p_grp;
@@ -244,6 +249,7 @@ void compute_vec_Bg_ii(double* vec_Bg_ii, Graph_A* graph, Group* group) {
 		*p_vec = (double)(graph->vec_k[*p_grp] * graph->vec_k[*p_grp]) / (double)graph->m;
 	}
 }
+
 void compute_row_Bg(double* row_Bg, Graph_A* graph, Group* group, int node) {
 	int* p_grp, m = graph->m, dim = group->size_g;
 	double* p_Bg, tmp = (double)graph->vec_k[node] / (double)m;
