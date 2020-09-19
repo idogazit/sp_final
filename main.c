@@ -9,8 +9,7 @@ int main(int argc, char* argv[]) {
 	Partition final_partition;
 	FILE* input_file;
 	int n;
-	clock_t start, end;
-	start = clock();
+
 	
 	if (argc != 3)
 	{
@@ -49,9 +48,6 @@ int main(int argc, char* argv[]) {
 
 	kill_partition(&final_partition);
 	kill_graph(&graph);
-	end = clock();
-	printf("Execution time is %f seconds\n",
-				((double)(end-start) / CLOCKS_PER_SEC));
-	/*print_output(argv[2]);*/
+	
 	return 0;
 }
